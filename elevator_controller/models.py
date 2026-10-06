@@ -1,10 +1,9 @@
 """Data shared by the elevator controller and its scheduling policy."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from math import isfinite
 from time import monotonic
-from dataclasses import field
 
 
 class Direction(Enum):
@@ -61,7 +60,7 @@ class CabinRequest:
 
 @dataclass(frozen=True)
 class Elevator:
-    """Immutable state snapshot; a future controller will replace it on events.
+    """Immutable state snapshot; the controller replaces it on events.
 
     While moving, current_floor is the last reported floor. last_direction is
     retained while stopped so equidistant destinations have a stable tie-break.

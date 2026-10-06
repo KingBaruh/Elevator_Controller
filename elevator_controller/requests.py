@@ -1,4 +1,4 @@
-"""Pending requests owned exclusively by the future controller thread."""
+"""Pending requests owned exclusively by the controller thread."""
 
 from .models import CabinRequest, Direction, HallRequest, validate_floor
 
