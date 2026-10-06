@@ -1,7 +1,10 @@
 """Deterministic scheduling, independent of threads, I/O and wall-clock waits."""
 
+from dataclasses import replace
+
 from .models import (
     Direction,
+    DoorState,
     Elevator,
     HallRequest,
     MotionState,
@@ -90,22 +93,65 @@ class SchedulingPolicy:
             travel_direction=direction,
             stops=(PlannedStop(terminal, terminal_service),),
             committed_pickup=pickup,
+            allow_pickup_extension=(
+                pickup is not None and not pending.cabin and direction is not None
+                and pickup.direction is not direction and not overdue
+            ),
         )
-        return self.propose_route_update(route, elevator, pending)
+        return self.propose_route_update(route, elevator, pending, now=now)
+
+    def _extend_pickup_approach(
+        self, route: Route, elevator: Elevator, pending: PendingRequests, now: float
+    ) -> Route:
+        """Move an opposite-direction pickup to the farthest matching hall call.
+
+        The displaced hall call stays pending, including its original age. Only
+        an unboarded approach is eligible; no existing intermediate stop is
+        discarded. Any overdue hall call blocks further extension.
+        """
+        pickup = route.committed_pickup
+        direction = route.travel_direction
+        if (
+            not route.allow_pickup_extension or pending.cabin
+            or elevator.doors is not DoorState.CLOSED
+            or pickup is None or direction is None or pickup.direction is direction
+            or any(now - request.created_at >= self.max_hall_wait for request in pending.hall)
+        ):
+            return route
+        farther_calls = tuple(
+            request for request in pending.hall
+            if request.direction is pickup.direction
+            and (request.floor - route.terminal_floor) * direction.step > 0
+        )
+        if not farther_calls:
+            return route
+        farther = max(farther_calls, key=lambda request: request.floor * direction.step)
+        # The old terminal pickup will be served in its requested direction on
+        # the return trip. It is not fulfilled here and retains its wait time.
+        stops = tuple(stop for stop in route.stops if stop.floor != route.terminal_floor)
+        return replace(
+            route, terminal_floor=farther.floor, committed_pickup=farther,
+            stops=stops + (PlannedStop(farther.floor, farther.direction),),
+        )
 
     def propose_route_update(
-        self, route: Route, elevator: Elevator, pending: PendingRequests
+        self, route: Route, elevator: Elevator, pending: PendingRequests, *, now: float
     ) -> Route:
         """Return an immutable proposal without changing the active route.
 
         When the next target changes during movement, the controller must get
         hardware approval before adopting the proposal. On rejection, retain
-        the old route and all pending requests. No stop is ever removed here.
+        the old route and all pending requests. An eligible pickup approach may
+        move its terminal pickup farther away; other committed stops stay put.
         """
+        validate_time(now)
         self._check_building(elevator, pending)
+        if any(request.created_at > now for request in pending.hall):
+            raise ValueError("Request timestamps and now must use the same clock.")
         if elevator.faulted or route.travel_direction is None:
             return route
 
+        route = self._extend_pickup_approach(route, elevator, pending, now)
         direction = route.travel_direction
         current = elevator.current_floor
         candidates = {stop.floor: stop for stop in route.stops}
@@ -124,10 +170,4 @@ class SchedulingPolicy:
                 candidates.setdefault(request.floor, PlannedStop(request.floor, direction))
 
         ordered = tuple(candidates[floor] for floor in sorted(candidates, reverse=direction is Direction.DOWN))
-        return Route(
-            origin_floor=route.origin_floor,
-            terminal_floor=route.terminal_floor,
-            travel_direction=direction,
-            stops=ordered,
-            committed_pickup=route.committed_pickup,
-        )
+        return replace(route, stops=ordered)

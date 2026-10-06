@@ -35,7 +35,11 @@ class ElevatorHardware(Protocol):
     def move_to_floor(self, floor: int, command_id: int) -> bool: ...
 
     def try_update_target(self, floor: int, command_id: int) -> bool:
-        """Update the active movement identified by command_id, without reversing."""
+        """Shorten or extend the active movement without reversing.
+
+        Extending a pickup approach is a controller decision. The adapter may
+        reject the change if braking for the old target can no longer be canceled.
+        """
         ...
 
     def open_doors(self, command_id: int) -> bool: ...

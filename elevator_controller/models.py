@@ -101,7 +101,7 @@ class PlannedStop:
 
 @dataclass(frozen=True)
 class Route:
-    """One finite sweep. Updates can insert stops but cannot move its endpoint.
+    """One finite sweep, optionally preceded by an extendable pickup approach.
 
     A terminal pickup can serve the opposite direction to travel_direction.
     A route at the current floor has no travel direction and needs no movement.
@@ -112,6 +112,7 @@ class Route:
     travel_direction: Direction | None
     stops: tuple[PlannedStop, ...]
     committed_pickup: HallRequest | None = None
+    allow_pickup_extension: bool = False
 
     @property
     def next_stop(self) -> PlannedStop:
@@ -129,4 +130,5 @@ class Route:
             travel_direction=self.travel_direction,
             stops=self.stops[1:],
             committed_pickup=self.committed_pickup,
+            allow_pickup_extension=False,  # The first pickup/service has happened.
         )

@@ -16,7 +16,7 @@ def policy_demo() -> None:
     print("Committed pickup:", [stop.floor for stop in route.stops])
 
     requests.add_cabin(CabinRequest(7))
-    route = policy.propose_route_update(route, Elevator(1), requests)
+    route = policy.propose_route_update(route, Elevator(1), requests, now=0)
     print("Intermediate cabin destination:", [stop.floor for stop in route.stops])
 
     # Simulate doors opening at 7, completing that stop, and a passenger boarding.
@@ -24,7 +24,7 @@ def policy_demo() -> None:
     route = route.after_servicing(7)
     assert route is not None
     requests.add_cabin(CabinRequest(1))
-    route = policy.propose_route_update(route, Elevator(7), requests)
+    route = policy.propose_route_update(route, Elevator(7), requests, now=10)
     print("New cabin destination 1; keep commitment:", [stop.floor for stop in route.stops])
 
     requests.mark_served(8, route.next_stop.service_direction)

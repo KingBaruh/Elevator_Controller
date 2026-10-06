@@ -109,6 +109,76 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(self.last("move_to_floor").arguments[0], 1)
         self.assertIsNone(self.state.fault)
 
+    def start_at_seven(self):
+        self.hardware = FakeHardware(Elevator(7))
+        self.controller = ElevatorController(
+            self.hardware, 10, clock=self.clock, door_dwell_seconds=3,
+        )
+
+    def test_seven_to_one_then_three_then_six_pickup_sequence(self):
+        self.start_at_seven()
+        self.send(HallButtonPressed(3, Direction.UP))
+        self.assertEqual(self.state.elevator.target_floor, 3)
+        self.send(HallButtonPressed(1, Direction.UP))
+        self.assertTrue(self.last("try_update_target").accepted)
+        self.assertEqual(self.state.elevator.target_floor, 1)
+        self.assertEqual({r.floor for r in self.state.hall_requests}, {1, 3})
+
+        self.arrive(1)
+        self.open()
+        self.assertEqual([r.floor for r in self.state.hall_requests], [3])
+        self.finish_dwell()
+        self.close()
+        self.assertEqual(self.state.elevator.target_floor, 3)
+        self.arrive(3)
+        self.open()
+        self.send(CabinButtonPressed(6))
+        self.finish_dwell()
+        self.close()
+        self.assertEqual(self.state.elevator.target_floor, 6)
+        self.arrive(6)
+        self.open()
+        self.finish_dwell()
+        self.close()
+        self.assertTrue(self.state.idle)
+
+    def test_hardware_rejected_extension_keeps_original_pickup_and_both_requests(self):
+        self.start_at_seven()
+        self.send(HallButtonPressed(3, Direction.UP))
+        original = self.state.route
+        self.hardware.accept_retargets = False
+        self.send(HallButtonPressed(1, Direction.UP))
+        self.assertFalse(self.last("try_update_target").accepted)
+        self.assertEqual(self.state.route, original)
+        self.assertEqual(self.state.elevator.target_floor, 3)
+        self.assertEqual({r.floor for r in self.state.hall_requests}, {1, 3})
+        self.assertIsNone(self.state.fault)
+
+    def test_arrival_queued_before_extension_keeps_original_stop(self):
+        self.start_at_seven()
+        self.send(HallButtonPressed(3, Direction.UP))
+        movement_id = self.last("move_to_floor").arguments[1]
+        self.hardware.emit(ArrivedAtFloor(3, movement_id))
+        self.controller.handle_event(HallButtonPressed(1, Direction.UP))
+        self.assertFalse(self.last("try_update_target").accepted)
+        self.controller.handle_event(self.hardware.wait_for_event())
+        self.assertEqual(self.state.elevator.current_floor, 3)
+        self.assertEqual(self.state.elevator.doors, DoorState.OPENING)
+        self.assertIsNone(self.state.fault)
+
+    def test_after_arrival_internal_destination_keeps_priority_over_new_lower_call(self):
+        self.start_at_seven()
+        self.send(HallButtonPressed(3, Direction.UP))
+        self.arrive(3)
+        self.send(HallButtonPressed(1, Direction.UP))
+        self.open()
+        self.send(CabinButtonPressed(6))
+        self.finish_dwell()
+        self.close()
+        self.assertFalse(self.commands("try_update_target"))
+        self.assertEqual(self.state.elevator.target_floor, 6)
+        self.assertEqual([r.floor for r in self.state.hall_requests], [1])
+
     def test_accepted_intermediate_stop_keeps_original_destination(self):
         self.send(CabinButtonPressed(7))
         self.send(HallButtonPressed(3, Direction.UP))

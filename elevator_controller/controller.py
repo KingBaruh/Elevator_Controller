@@ -182,7 +182,9 @@ class ElevatorController:
     def _refresh_route(self) -> None:
         if self._route is None or self._elevator.faulted:
             return
-        proposal = self._policy.propose_route_update(self._route, self._elevator, self._pending)
+        proposal = self._policy.propose_route_update(
+            self._route, self._elevator, self._pending, now=self._clock()
+        )
         if self._elevator.motion is MotionState.MOVING:
             if proposal.next_stop.floor != self._route.next_stop.floor:
                 assert self._motion_id is not None
