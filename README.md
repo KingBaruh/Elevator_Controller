@@ -93,13 +93,111 @@ py -m elevator_controller --policy-only
 
 ## חוטים ואירועים
 
-```text
-Hardware -> HardwareListener -> queue.Queue -> ElevatorController
-                                                   |
-                                       SchedulingPolicy + pending requests
-                                                   |
-                                              Hardware commands
+```mermaid
+flowchart LR
+    subgraph MAIN["Main thread"]
+        SYS["ElevatorSystem<br/>start / stop"]
+    end
+
+    HW["ElevatorHardware<br/>Hardware adapter"]
+    Q["queue.Queue<br/>ControlMessage"]
+
+    subgraph INPUT["Worker: elevator-listener"]
+        L["HardwareListener"]
+    end
+
+    subgraph CONTROL["Worker: elevator-controller"]
+        C["ElevatorController"]
+        P["SchedulingPolicy"]
+        R["PendingRequests"]
+        S["Elevator + Route<br/>Current state"]
+        C -->|Plan and revise route| P
+        C -->|Add and complete requests| R
+        C -->|Replace state| S
+        P -->|Read requests| R
+    end
+
+    SYS -.->|Start and join| L
+    SYS -.->|Start and join| C
+    HW -->|wait_for_event| L
+    L -->|put event| Q
+    Q -->|get event| C
+    C -->|Movement, doors, displays| HW
 ```
+
+החצים הרציפים מציגים העברת אירועים או שימוש ברכיב; החצים המקווקווים
+מציגים ניהול חיי החוטים. `ElevatorHardware` הוא ממשק שהמתאם מממש:
+בהדגמת הטרמינל משתמשים ב-`FakeHardware`, ובסימולטור ב-`SimulatorHardware`.
+`ElevatorSystem` יוצר את התור ואת שני חוטי העבודה. המדיניות ואוסף הבקשות
+פועלים בתוך חוט הבקר, ואינם חוטים נוספים.
+
+התוספת הגרפית מתחברת לאותה ארכיטקטורה כך:
+
+```mermaid
+flowchart LR
+    subgraph MAIN["Main thread - optional simulator"]
+        UI["SimulatorApp<br/>Tkinter event loop"]
+    end
+    SIM["SimulatorHardware<br/>Implements ElevatorHardware"]
+    CTRL["ElevatorController<br/>Worker thread"]
+    UI -->|Button presses and tick| SIM
+    SIM -->|Physical snapshot| UI
+    CTRL -->|Controller snapshot| UI
+```
+
+חוט הממשק קורא צילומי מצב ומרענן את התצוגה; חוט הבקר אינו ניגש לרכיבי
+Tkinter. המתאם המדומה הוא אותו רכיב חומרה מהתרשים הראשון, והאירועים שלו
+עוברים דרך חוט ההאזנה והתור. אין חוט נוסף לכל קומה או לאנימציה.
+
+### רצף אסינכרוני — מקריאה בקומה ועד השלמת השירות
+
+הדוגמה מניחה מעלית פנויה בקומה 1 וקריאת עלייה בקומה 3. כל אירוע חומרה
+נקרא באמצעות `wait_for_event`, מועבר לתור ומטופל בחוט הבקר.
+
+```mermaid
+sequenceDiagram
+    participant H as Hardware adapter
+    participant L as HardwareListener
+    participant Q as Event queue
+    participant C as ElevatorController
+    participant P as SchedulingPolicy
+
+    H-->>L: HallButtonPressed(3, UP)
+    L->>Q: put(event)
+    Q->>C: get() returns event
+    C->>C: Add hall request
+    C->>P: plan_next_route(state, pending, now)
+    P-->>C: Route to floor 3
+    C->>H: move_to_floor(3, command_id=1)
+    H-->>C: True - command accepted
+    Note over H,C: Travel continues; controller can process other events
+
+    H-->>L: ArrivedAtFloor(3, command_id=1)
+    L->>Q: put(event)
+    Q->>C: get() returns event
+    C->>C: Validate command ID and update position
+    C->>H: open_doors(command_id=2)
+    H-->>C: True - command accepted
+    Note over H,C: Door movement completes later
+
+    H-->>L: DoorsOpened(command_id=2)
+    L->>Q: put(event)
+    Q->>C: get() returns event
+    C->>C: Complete matching requests and set dwell deadline
+    Note over Q,C: Process events while waiting for dwell deadline
+    C->>H: close_doors(command_id=3)
+    H-->>C: True - command accepted
+
+    H-->>L: DoorsClosed(command_id=3)
+    L->>Q: put(event)
+    Q->>C: get() returns event
+    C->>C: Continue pending route or become idle
+```
+
+אישור קבלת הפקודה חוזר מיד; הוא אינו אישור שהפעולה הסתיימה. רק אירוע
+ההשלמה עם `command_id` המתאים מקדם את מצב הבקר. בקשת הנוסע מושלמת
+בפתיחת הדלתות בכיוון השירות המתאים. התרשים משמיט דיווחי מעבר בקומות
+ועדכוני תצוגה כדי להתמקד ברצף השירות.
 
 נוצרים שני חוטי עבודה: `elevator-listener` ו-`elevator-controller`.
 בנוסף קיימת התוכנית הראשית שמפעילה ומכבה אותם; אין חוט לכל קומה ואין
