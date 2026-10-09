@@ -168,13 +168,16 @@ class SimulatorApp:
         canvas.delete("all")
         self._floor_y: dict[int, float] = {}
         self._wait_displays: dict[tuple[int, Direction], int] = {}
+        self._floor_displays: dict[int, int] = {}
         self._top = 74
         self._row_height = (height - self._top - 20) / FLOORS
-        self._shaft_left, self._shaft_right = width - 181, width - 37
+        # Keep both readout columns clear of the shaft at the minimum window size.
+        self._shaft_left, self._shaft_right = max(476, width - 181), width - 37
         canvas.create_text(26, 25, text="BUILDING", anchor="w", fill=INK, font=ui_font(11, True))
         canvas.create_text(42, 45, text="FLOOR", fill=MUTED, font=ui_font(8, True))
         canvas.create_text(190, 45, text="HALL BUTTONS", fill=MUTED, font=ui_font(8, True))
         canvas.create_text(320, 45, text="WAIT TIME", fill=MUTED, font=ui_font(8, True))
+        canvas.create_text(430, 45, text="LIFT DISPLAY", fill=MUTED, font=ui_font(8, True))
         for direction, x in ((Direction.UP, 288), (Direction.DOWN, 352)):
             canvas.create_text(x, 61, text="▲" if direction is Direction.UP else "▼", fill=MUTED, font=ui_font(8))
         shaft_center = (self._shaft_left + self._shaft_right) / 2
@@ -200,6 +203,10 @@ class SimulatorApp:
                     self._wait_displays[floor_number, direction] = canvas.create_text(
                         x, y, text="—", fill=MUTED, font=ui_font(10, True),
                     )
+            canvas.create_rectangle(392, y - 14, 468, y + 14, fill=NAVY, outline="")
+            self._floor_displays[floor_number] = canvas.create_text(
+                430, y, text="01  ·", fill="#87d9bd", font=ui_font(11, True),
+            )
         for x in (self._shaft_left + 15, self._shaft_right - 15):
             canvas.create_line(x, self._top, x, height - 20, fill="#c3cedb", width=2)
         self._landing = canvas.create_rectangle(0, 0, 0, 0, fill="#cfebe1", outline="")
@@ -267,6 +274,9 @@ class SimulatorApp:
         if not self._drawing_ready:
             return
         canvas = self.canvas
+        symbol = {Direction.UP: "↑", Direction.DOWN: "↓", None: "·"}[physical.display_direction]
+        for item in self._floor_displays.values():
+            canvas.itemconfigure(item, text=f"{physical.display_floor:02d}  {symbol}")
         now = monotonic()
         waiting_since = {(request.floor, request.direction): request.created_at for request in state.hall_requests}
         for key, item in self._wait_displays.items():

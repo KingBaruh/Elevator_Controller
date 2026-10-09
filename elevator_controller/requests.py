@@ -13,7 +13,11 @@ class PendingRequests:
     def __init__(self, number_of_floors: int) -> None:
         validate_floor(number_of_floors)
         self.number_of_floors = number_of_floors
+
+        # Hall requests, indexed by floor and direction.
         self._hall: dict[tuple[int, Direction], HallRequest] = {}
+
+        # Cabin requests, indexed by floor.
         self._cabin: dict[int, CabinRequest] = {}
 
     def _check_floor(self, floor: int) -> None:
