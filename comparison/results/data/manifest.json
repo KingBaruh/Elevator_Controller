@@ -1,0 +1,1507 @@
+{
+  "settings": {
+    "time_step": 0.1,
+    "seconds_per_floor": 1.0,
+    "door_seconds": 0.5,
+    "door_dwell_seconds": 2.0
+  },
+  "floors": 10,
+  "max_hall_wait_s": 60,
+  "scenarios": [
+    {
+      "name": "direction_change",
+      "seed": 0,
+      "duration": 60,
+      "passengers": [
+        {
+          "passenger_id": "rider",
+          "ready_at": 0,
+          "origin": 1,
+          "destinations": [
+            7,
+            5
+          ],
+          "initially_onboard": true
+        },
+        {
+          "passenger_id": "floor_8",
+          "ready_at": 2,
+          "origin": 8,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        }
+      ]
+    },
+    {
+      "name": "repeated_cabin",
+      "seed": 0,
+      "duration": 120,
+      "passengers": [
+        {
+          "passenger_id": "shuttle",
+          "ready_at": 0,
+          "origin": 1,
+          "destinations": [
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5,
+            3,
+            5
+          ],
+          "initially_onboard": true
+        },
+        {
+          "passenger_id": "floor_9",
+          "ready_at": 1,
+          "origin": 9,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        }
+      ]
+    },
+    {
+      "name": "mixed_traffic",
+      "seed": 11,
+      "duration": 180,
+      "passengers": [
+        {
+          "passenger_id": "passenger_12",
+          "ready_at": 0.6,
+          "origin": 5,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_23",
+          "ready_at": 1.8,
+          "origin": 5,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_08",
+          "ready_at": 7.1,
+          "origin": 9,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_25",
+          "ready_at": 7.2,
+          "origin": 2,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_18",
+          "ready_at": 8.0,
+          "origin": 5,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_21",
+          "ready_at": 8.8,
+          "origin": 7,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_24",
+          "ready_at": 16.2,
+          "origin": 7,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_02",
+          "ready_at": 22.2,
+          "origin": 10,
+          "destinations": [
+            4
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_19",
+          "ready_at": 25.6,
+          "origin": 1,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_11",
+          "ready_at": 28.0,
+          "origin": 4,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_16",
+          "ready_at": 34.7,
+          "origin": 4,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_15",
+          "ready_at": 37.8,
+          "origin": 2,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_22",
+          "ready_at": 40.4,
+          "origin": 4,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_20",
+          "ready_at": 45.1,
+          "origin": 1,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_17",
+          "ready_at": 48.0,
+          "origin": 2,
+          "destinations": [
+            3
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_29",
+          "ready_at": 50.5,
+          "origin": 2,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_10",
+          "ready_at": 52.9,
+          "origin": 8,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_04",
+          "ready_at": 53.6,
+          "origin": 3,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_01",
+          "ready_at": 60.9,
+          "origin": 8,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_27",
+          "ready_at": 61.1,
+          "origin": 4,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_05",
+          "ready_at": 64.6,
+          "origin": 3,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_09",
+          "ready_at": 72.0,
+          "origin": 4,
+          "destinations": [
+            5
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_07",
+          "ready_at": 74.8,
+          "origin": 10,
+          "destinations": [
+            3
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_03",
+          "ready_at": 75.6,
+          "origin": 9,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_28",
+          "ready_at": 77.2,
+          "origin": 3,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_13",
+          "ready_at": 78.6,
+          "origin": 2,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_26",
+          "ready_at": 81.8,
+          "origin": 8,
+          "destinations": [
+            3
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_00",
+          "ready_at": 102.8,
+          "origin": 8,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_06",
+          "ready_at": 115.8,
+          "origin": 1,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_14",
+          "ready_at": 119.5,
+          "origin": 7,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        }
+      ]
+    },
+    {
+      "name": "mixed_traffic",
+      "seed": 22,
+      "duration": 180,
+      "passengers": [
+        {
+          "passenger_id": "passenger_00",
+          "ready_at": 2.8,
+          "origin": 3,
+          "destinations": [
+            5
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_25",
+          "ready_at": 3.6,
+          "origin": 4,
+          "destinations": [
+            3
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_29",
+          "ready_at": 6.3,
+          "origin": 4,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_22",
+          "ready_at": 7.0,
+          "origin": 7,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_28",
+          "ready_at": 16.2,
+          "origin": 2,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_26",
+          "ready_at": 21.5,
+          "origin": 7,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_02",
+          "ready_at": 27.8,
+          "origin": 6,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_23",
+          "ready_at": 28.6,
+          "origin": 4,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_10",
+          "ready_at": 31.0,
+          "origin": 10,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_12",
+          "ready_at": 33.5,
+          "origin": 9,
+          "destinations": [
+            3
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_18",
+          "ready_at": 35.7,
+          "origin": 7,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_06",
+          "ready_at": 37.3,
+          "origin": 1,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_21",
+          "ready_at": 42.7,
+          "origin": 2,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_16",
+          "ready_at": 47.7,
+          "origin": 9,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_20",
+          "ready_at": 51.3,
+          "origin": 7,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_13",
+          "ready_at": 51.8,
+          "origin": 5,
+          "destinations": [
+            3
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_27",
+          "ready_at": 53.2,
+          "origin": 6,
+          "destinations": [
+            4
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_24",
+          "ready_at": 55.1,
+          "origin": 1,
+          "destinations": [
+            3
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_15",
+          "ready_at": 60.8,
+          "origin": 7,
+          "destinations": [
+            5
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_19",
+          "ready_at": 65.2,
+          "origin": 10,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_17",
+          "ready_at": 67.6,
+          "origin": 3,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_05",
+          "ready_at": 69.3,
+          "origin": 7,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_04",
+          "ready_at": 82.2,
+          "origin": 3,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_09",
+          "ready_at": 83.8,
+          "origin": 10,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_01",
+          "ready_at": 84.2,
+          "origin": 8,
+          "destinations": [
+            3
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_07",
+          "ready_at": 102.0,
+          "origin": 4,
+          "destinations": [
+            3
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_11",
+          "ready_at": 108.1,
+          "origin": 7,
+          "destinations": [
+            5
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_14",
+          "ready_at": 108.1,
+          "origin": 6,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_08",
+          "ready_at": 112.6,
+          "origin": 10,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_03",
+          "ready_at": 117.1,
+          "origin": 1,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        }
+      ]
+    },
+    {
+      "name": "mixed_traffic",
+      "seed": 33,
+      "duration": 180,
+      "passengers": [
+        {
+          "passenger_id": "passenger_18",
+          "ready_at": 6.9,
+          "origin": 6,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_17",
+          "ready_at": 11.2,
+          "origin": 2,
+          "destinations": [
+            4
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_11",
+          "ready_at": 14.8,
+          "origin": 2,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_02",
+          "ready_at": 22.4,
+          "origin": 9,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_19",
+          "ready_at": 24.3,
+          "origin": 5,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_03",
+          "ready_at": 38.5,
+          "origin": 10,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_13",
+          "ready_at": 42.5,
+          "origin": 6,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_23",
+          "ready_at": 45.6,
+          "origin": 1,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_14",
+          "ready_at": 47.3,
+          "origin": 5,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_05",
+          "ready_at": 49.7,
+          "origin": 2,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_04",
+          "ready_at": 53.4,
+          "origin": 9,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_20",
+          "ready_at": 54.9,
+          "origin": 4,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_29",
+          "ready_at": 55.5,
+          "origin": 10,
+          "destinations": [
+            5
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_22",
+          "ready_at": 58.3,
+          "origin": 8,
+          "destinations": [
+            5
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_12",
+          "ready_at": 61.5,
+          "origin": 6,
+          "destinations": [
+            4
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_08",
+          "ready_at": 66.7,
+          "origin": 5,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_21",
+          "ready_at": 70.8,
+          "origin": 8,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_00",
+          "ready_at": 75.9,
+          "origin": 10,
+          "destinations": [
+            3
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_01",
+          "ready_at": 78.2,
+          "origin": 5,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_24",
+          "ready_at": 80.1,
+          "origin": 6,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_28",
+          "ready_at": 82.9,
+          "origin": 8,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_27",
+          "ready_at": 87.5,
+          "origin": 3,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_07",
+          "ready_at": 97.8,
+          "origin": 10,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_16",
+          "ready_at": 102.2,
+          "origin": 6,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_09",
+          "ready_at": 103.7,
+          "origin": 4,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_26",
+          "ready_at": 104.7,
+          "origin": 8,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_15",
+          "ready_at": 105.5,
+          "origin": 3,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_06",
+          "ready_at": 107.9,
+          "origin": 9,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_25",
+          "ready_at": 112.4,
+          "origin": 4,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_10",
+          "ready_at": 119.4,
+          "origin": 6,
+          "destinations": [
+            5
+          ],
+          "initially_onboard": false
+        }
+      ]
+    },
+    {
+      "name": "mixed_traffic",
+      "seed": 44,
+      "duration": 180,
+      "passengers": [
+        {
+          "passenger_id": "passenger_13",
+          "ready_at": 5.2,
+          "origin": 4,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_06",
+          "ready_at": 8.8,
+          "origin": 6,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_03",
+          "ready_at": 12.0,
+          "origin": 10,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_07",
+          "ready_at": 13.4,
+          "origin": 5,
+          "destinations": [
+            3
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_22",
+          "ready_at": 13.5,
+          "origin": 6,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_24",
+          "ready_at": 14.7,
+          "origin": 1,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_12",
+          "ready_at": 15.6,
+          "origin": 4,
+          "destinations": [
+            5
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_16",
+          "ready_at": 18.1,
+          "origin": 8,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_02",
+          "ready_at": 27.0,
+          "origin": 5,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_08",
+          "ready_at": 32.4,
+          "origin": 2,
+          "destinations": [
+            3
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_26",
+          "ready_at": 32.6,
+          "origin": 5,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_27",
+          "ready_at": 32.9,
+          "origin": 1,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_18",
+          "ready_at": 33.4,
+          "origin": 6,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_10",
+          "ready_at": 41.3,
+          "origin": 5,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_01",
+          "ready_at": 45.5,
+          "origin": 2,
+          "destinations": [
+            4
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_21",
+          "ready_at": 48.5,
+          "origin": 6,
+          "destinations": [
+            4
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_11",
+          "ready_at": 57.1,
+          "origin": 2,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_29",
+          "ready_at": 58.0,
+          "origin": 1,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_00",
+          "ready_at": 65.0,
+          "origin": 7,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_20",
+          "ready_at": 65.2,
+          "origin": 10,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_25",
+          "ready_at": 74.4,
+          "origin": 3,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_04",
+          "ready_at": 83.2,
+          "origin": 9,
+          "destinations": [
+            5
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_14",
+          "ready_at": 88.6,
+          "origin": 7,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_05",
+          "ready_at": 91.9,
+          "origin": 7,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_15",
+          "ready_at": 99.7,
+          "origin": 6,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_28",
+          "ready_at": 103.0,
+          "origin": 9,
+          "destinations": [
+            4
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_19",
+          "ready_at": 106.0,
+          "origin": 1,
+          "destinations": [
+            5
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_09",
+          "ready_at": 113.2,
+          "origin": 6,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_17",
+          "ready_at": 119.2,
+          "origin": 8,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_23",
+          "ready_at": 119.9,
+          "origin": 4,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        }
+      ]
+    },
+    {
+      "name": "mixed_traffic",
+      "seed": 55,
+      "duration": 180,
+      "passengers": [
+        {
+          "passenger_id": "passenger_06",
+          "ready_at": 4.9,
+          "origin": 1,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_20",
+          "ready_at": 6.7,
+          "origin": 2,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_27",
+          "ready_at": 6.9,
+          "origin": 3,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_12",
+          "ready_at": 12.9,
+          "origin": 6,
+          "destinations": [
+            1
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_00",
+          "ready_at": 18.0,
+          "origin": 2,
+          "destinations": [
+            5
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_11",
+          "ready_at": 20.4,
+          "origin": 4,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_10",
+          "ready_at": 23.4,
+          "origin": 9,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_15",
+          "ready_at": 26.5,
+          "origin": 3,
+          "destinations": [
+            4
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_25",
+          "ready_at": 26.9,
+          "origin": 2,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_09",
+          "ready_at": 27.8,
+          "origin": 1,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_14",
+          "ready_at": 28.9,
+          "origin": 10,
+          "destinations": [
+            4
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_21",
+          "ready_at": 37.7,
+          "origin": 5,
+          "destinations": [
+            6
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_04",
+          "ready_at": 38.2,
+          "origin": 9,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_13",
+          "ready_at": 39.0,
+          "origin": 7,
+          "destinations": [
+            5
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_02",
+          "ready_at": 42.2,
+          "origin": 5,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_03",
+          "ready_at": 46.2,
+          "origin": 8,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_16",
+          "ready_at": 52.8,
+          "origin": 9,
+          "destinations": [
+            3
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_26",
+          "ready_at": 56.7,
+          "origin": 9,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_23",
+          "ready_at": 58.4,
+          "origin": 8,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_24",
+          "ready_at": 65.8,
+          "origin": 8,
+          "destinations": [
+            5
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_29",
+          "ready_at": 67.4,
+          "origin": 6,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_18",
+          "ready_at": 70.3,
+          "origin": 7,
+          "destinations": [
+            9
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_22",
+          "ready_at": 72.0,
+          "origin": 3,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_07",
+          "ready_at": 84.7,
+          "origin": 4,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_01",
+          "ready_at": 89.7,
+          "origin": 5,
+          "destinations": [
+            2
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_05",
+          "ready_at": 92.8,
+          "origin": 7,
+          "destinations": [
+            10
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_19",
+          "ready_at": 98.1,
+          "origin": 2,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_17",
+          "ready_at": 99.3,
+          "origin": 5,
+          "destinations": [
+            3
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_28",
+          "ready_at": 100.0,
+          "origin": 4,
+          "destinations": [
+            7
+          ],
+          "initially_onboard": false
+        },
+        {
+          "passenger_id": "passenger_08",
+          "ready_at": 100.5,
+          "origin": 10,
+          "destinations": [
+            8
+          ],
+          "initially_onboard": false
+        }
+      ]
+    }
+  ]
+}

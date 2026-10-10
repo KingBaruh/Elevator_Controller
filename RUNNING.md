@@ -45,6 +45,15 @@ py -m elevator_controller
 py -m elevator_simulator
 ```
 
+להפעלת אותו ממשק עם מדיניות ה־baseline:
+
+```powershell
+py -m elevator_simulator --policy baseline
+```
+
+ללא הדגל מופעלת המדיניות שלנו (`service-sweep`). שם המדיניות מוצג בכותרת החלון,
+וגם לאחר `Reset simulation` נשמרת אותה מדיניות.
+
 ייפתח חלון שמציג את המעלית, הקומות, הדלתות, הבקשות והמסלול המתוכנן.
 זו תוספת נפרדת שמשתמשת באותו בקר.
 
@@ -63,9 +72,20 @@ py -m elevator_simulator
 אם החלון אינו נפתח, אפשר לבדוק את זמינות Tkinter באמצעות `py -m tkinter`;
 הפקודה אמורה לפתוח חלון בדיקה שאפשר לסגור. הרצת הממשק דורשת סביבת שולחן עבודה.
 
+## השוואת מדיניות ויצירת גרפים
+
+```powershell
+py -m pip install -r comparison/requirements.txt
+py -m comparison
+```
+
+התוצאות והגרפים נשמרים ב-`comparison/results/`. אפשר להפיק את הגרפים מחדש
+מהנתונים הקיימים באמצעות `py -m comparison --plot-only`, או להריץ ללא
+גרפים באמצעות `py -m comparison --no-plots`. פרטים ב-[מדריך ההשוואה](comparison/README.md).
+
 ## שלב 4 — הרצת הבדיקות (tests)
 
-להרצת **כל הבדיקות**, כולל הבקר והסימולטור, בפקודה אחת:
+להרצת **כל הבדיקות**, כולל הבקר, הסימולטור וכלי ההשוואה, בפקודה אחת:
 
 ```powershell
 py -m unittest discover -v

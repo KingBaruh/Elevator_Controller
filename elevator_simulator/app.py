@@ -1,10 +1,11 @@
 """Ten-floor Tkinter view. All widgets and animation run on the main thread."""
 
+import argparse
 import tkinter as tk
 from tkinter import messagebox
 from time import monotonic
 
-from elevator_controller import Direction, DoorState, ElevatorSystem, MotionState
+from elevator_controller import BaselinePolicy, Direction, DoorState, ElevatorSystem, MotionState, SchedulingPolicy
 
 from .hardware import SimulatorHardware
 
@@ -27,8 +28,10 @@ def ui_font(size: int, bold: bool = False) -> tuple:
 
 
 class SimulatorApp:
-    def __init__(self, root: tk.Tk) -> None:
+    def __init__(self, root: tk.Tk, *, policy: SchedulingPolicy | None = None) -> None:
         self.root = root
+        self.policy = policy if policy is not None else SchedulingPolicy()
+        policy_label = "Baseline: internal priority" if isinstance(self.policy, BaselinePolicy) else "Service sweep + aging"
         self._closed = False
         self._timer: str | None = None
         self._last_activity = -1
@@ -38,9 +41,9 @@ class SimulatorApp:
         self.hall_buttons: dict[tuple[int, Direction], tk.Button] = {}
         self.cabin_buttons: dict[int, tk.Button] = {}
         self.hardware = SimulatorHardware(FLOORS)
-        self.system = ElevatorSystem(self.hardware, FLOORS, door_dwell_seconds=2.0)
+        self.system = ElevatorSystem(self.hardware, FLOORS, policy=self.policy, door_dwell_seconds=2.0)
 
-        root.title("Elevator Lab | 10-floor simulator")
+        root.title(f"Elevator Lab | 10-floor simulator | {policy_label}")
         root.configure(bg=BG)
         width, height = 1120, 780
         x = max(0, (root.winfo_screenwidth() - width) // 2)
@@ -322,7 +325,7 @@ class SimulatorApp:
         self.hardware.shutdown()
         self.system.stop()
         self.hardware = SimulatorHardware(FLOORS)
-        self.system = ElevatorSystem(self.hardware, FLOORS, door_dwell_seconds=2.0)
+        self.system = ElevatorSystem(self.hardware, FLOORS, policy=self.policy, door_dwell_seconds=2.0)
         self._last_activity = -1
         self.system.start()
         self._render()
@@ -343,6 +346,13 @@ class SimulatorApp:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Interactive ten-floor elevator simulator.")
+    parser.add_argument(
+        "--policy", choices=("service-sweep", "baseline"), default="service-sweep",
+        help="Scheduling policy (default: service-sweep).",
+    )
+    args = parser.parse_args()
+    policy = BaselinePolicy() if args.policy == "baseline" else SchedulingPolicy()
     root = tk.Tk()
-    SimulatorApp(root)
+    SimulatorApp(root, policy=policy)
     root.mainloop()

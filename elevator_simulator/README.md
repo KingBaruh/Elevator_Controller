@@ -12,6 +12,15 @@
 py -m elevator_simulator
 ```
 
+ברירת המחדל היא המדיניות שלנו (`service-sweep`). להפעלה עם עדיפות פנימית של ה־baseline:
+
+```powershell
+py -m elevator_simulator --policy baseline
+```
+
+שם המדיניות מופיע בכותרת החלון. `Reset simulation` שומר על המדיניות שנבחרה.
+אפשר לציין במפורש `--policy service-sweep` כדי להפעיל את המדיניות שלנו.
+
 נדרשים Python 3.10 ומעלה ו-Tkinter, שכבר מותקן בסביבה הנוכחית.
 לא נדרשות חבילות חיצוניות. יש להריץ מתוך סביבת שולחן עבודה.
 

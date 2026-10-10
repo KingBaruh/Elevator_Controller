@@ -1,0 +1,5 @@
+request_id,kind,floor,direction,created_at,served_at
+1,cabin,7,,0.0,6.6
+2,hall,8,up,2.0,10.6
+3,cabin,5,,6.6,23.6
+4,cabin,10,,10.6,15.6

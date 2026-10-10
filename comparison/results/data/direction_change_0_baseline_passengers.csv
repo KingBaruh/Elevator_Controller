@@ -1,0 +1,3 @@
+passenger_id,status,ready_at,boarded_at,completed_at,legs_completed
+rider,done,0,0.0,11.6,2
+floor_8,done,2,17.6,22.6,1

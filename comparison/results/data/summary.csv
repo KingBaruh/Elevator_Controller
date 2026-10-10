@@ -1,0 +1,15 @@
+scenario,seed,policy,duration_s,hall_requested,hall_completed,hall_pending,hall_mean_wait_s,hall_max_wait_s,hall_oldest_pending_s,cabin_requested,cabin_completed,cabin_pending,cabin_mean_wait_s,cabin_max_wait_s,cabin_oldest_pending_s,distance_floors,passengers_released,passenger_mean_wait_s,passenger_max_wait_s,passengers_completed,passengers_waiting,passengers_riding
+direction_change,0,baseline,60,1,1,0,15.6,15.6,0.0,3,3,0,5.533333,6.6,0.0,13.0,2,15.6,15.6,2,0,0
+direction_change,0,service_sweep,60,1,1,0,8.6,8.6,0.0,3,3,0,9.533333,17.0,0.0,14.0,2,8.6,8.6,2,0,0
+repeated_cabin,0,baseline,120,1,0,1,,,119.0,25,24,1,4.895833,5.0,2.5,48.0,2,,,0,1,1
+repeated_cabin,0,service_sweep,120,1,1,0,13.5,13.5,0.0,23,22,1,5.568182,21.0,1.5,52.0,2,13.5,13.5,1,0,1
+mixed_traffic,11,baseline,180,22,22,0,25.004545,60.1,0.0,21,21,0,10.585714,29.0,0.0,59.0,30,24.716667,60.1,30,0,0
+mixed_traffic,11,service_sweep,180,22,22,0,26.654545,50.2,0.0,21,21,0,9.952381,26.0,0.0,61.0,30,23.793333,50.2,30,0,0
+mixed_traffic,22,baseline,180,20,20,0,30.195,65.5,0.0,21,21,0,12.666667,30.0,0.0,51.0,30,26.43,65.5,30,0,0
+mixed_traffic,22,service_sweep,180,22,22,0,26.072727,46.3,0.0,23,23,0,11.069565,30.0,0.0,56.0,30,23.366667,46.3,30,0,0
+mixed_traffic,33,baseline,180,20,20,0,25.72,64.0,0.0,21,21,0,13.242857,32.0,0.0,46.0,30,25.136667,64.0,30,0,0
+mixed_traffic,33,service_sweep,180,21,21,0,25.233333,55.0,0.0,22,22,0,12.145455,29.0,0.0,57.0,30,22.74,55.0,30,0,0
+mixed_traffic,44,baseline,180,20,20,0,31.5,67.4,0.0,23,23,0,12.221739,27.0,0.0,50.0,30,28.653333,67.4,30,0,0
+mixed_traffic,44,service_sweep,180,20,20,0,29.155,58.4,0.0,23,23,0,12.304348,27.0,0.0,50.0,30,25.59,58.4,30,0,0
+mixed_traffic,55,baseline,180,22,22,0,23.486364,51.8,0.0,20,20,0,11.855,25.0,0.0,43.0,30,22.386667,51.8,30,0,0
+mixed_traffic,55,service_sweep,180,22,22,0,22.440909,47.1,0.0,20,20,0,11.105,25.0,0.0,49.0,30,20.52,47.1,30,0,0
