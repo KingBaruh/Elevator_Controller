@@ -1,8 +1,13 @@
-"""Deterministic scheduling, independent of threads, I/O and wall-clock waits."""
+"""Choose routes without moving hardware or changing pending requests.
+
+Start with plan_next_route() for a new trip, or propose_route_update() for an
+existing one. The controller decides when a proposal can actually be applied.
+"""
 
 from dataclasses import replace
 
 from .models import (
+    CabinRequest,
     Direction,
     DoorState,
     Elevator,
@@ -23,24 +28,6 @@ class SchedulingPolicy:
             raise ValueError("The hall wait threshold must be positive.")
         self.max_hall_wait = max_hall_wait
 
-    @staticmethod
-    def _direction(origin: int, destination: int) -> Direction | None:
-        if destination == origin:
-            return None
-        return Direction.UP if destination > origin else Direction.DOWN
-
-    @staticmethod
-    def _oldest(requests: tuple[HallRequest, ...]) -> HallRequest:
-        # Equal timestamps have a stable, documented floor/direction tie-break.
-        return min(requests, key=lambda r: (r.created_at, r.floor, r.direction.value))
-
-    @staticmethod
-    def _check_building(elevator: Elevator, pending: PendingRequests) -> None:
-        if elevator.current_floor > pending.number_of_floors:
-            raise ValueError("The elevator is outside the building.")
-        if elevator.target_floor is not None and elevator.target_floor > pending.number_of_floors:
-            raise ValueError("The target is outside the building.")
-
     def plan_next_route(
         self, elevator: Elevator, pending: PendingRequests, *, now: float
     ) -> Route | None:
@@ -49,15 +36,12 @@ class SchedulingPolicy:
         An overdue hall call leads; otherwise cabin requests lead; otherwise
         the oldest hall call leads. Planning never consumes pending requests.
         """
-        validate_time(now)
-        self._check_building(elevator, pending)
-        if any(request.created_at > now for request in pending.hall):
-            raise ValueError("Request timestamps and now must use the same clock.")
+        self._validate_inputs(elevator, pending, now)
         if not elevator.ready_to_depart or not pending:
             return None
 
-        current = elevator.current_floor
-        overdue = tuple(r for r in pending.hall if now - r.created_at >= self.max_hall_wait)
+        # Priority: overdue hall call, then cabin destinations, then regular hall call.
+        overdue = self._overdue_calls(pending, now)
         pickup = None
         if overdue:
             pickup = self._oldest(overdue)
@@ -65,67 +49,121 @@ class SchedulingPolicy:
             pickup = self._oldest(pending.hall)
 
         if pickup is not None:
-            terminal = pickup.floor
-            direction = self._direction(current, terminal)
-            terminal_service = pickup.direction
+            # Travel direction and pickup direction may differ: go UP to collect
+            # a passenger who wants to go DOWN, then serve DOWN at the pickup.
+            terminal_stop = PlannedStop(pickup.floor, pickup.direction)
         else:
-            closest = min(
-                pending.cabin,
-                key=lambda r: (
-                    abs(r.floor - current),
-                    0 if self._direction(current, r.floor) == elevator.last_direction else 1,
-                    r.floor,
-                ),
-            )
-            direction = self._direction(current, closest.floor)
-            if direction is None:
-                terminal = current
-                local_calls = tuple(r for r in pending.hall if r.floor == current)
-                terminal_service = self._oldest(local_calls).direction if local_calls else None
-            else:
-                forward = [r.floor for r in pending.cabin if (r.floor - current) * direction.step > 0]
-                terminal = max(forward) if direction is Direction.UP else min(forward)
-                terminal_service = direction
+            terminal_stop = self._choose_cabin_stop(elevator, pending)
 
-        route = Route(
-            origin_floor=current,
-            terminal_floor=terminal,
-            travel_direction=direction,
-            stops=(PlannedStop(terminal, terminal_service),),
-            committed_pickup=pickup,
-            allow_pickup_extension=(
-                pickup is not None and not pending.cabin and direction is not None
-                and pickup.direction is not direction and not overdue
-            ),
+        direction = self._direction(elevator.current_floor, terminal_stop.floor)
+        # Only an opposite-direction approach without cabin requests may extend.
+        # Route.after_servicing() disables this permission after the first service.
+        allow_extension = (
+            pickup is not None
+            and direction is not None
+            and pickup.direction is not direction
+            and not pending.cabin
+            and not overdue
         )
+        route = Route(
+            origin_floor=elevator.current_floor,
+            terminal_floor=terminal_stop.floor,
+            travel_direction=direction,
+            stops=(terminal_stop,),
+            committed_pickup=pickup,
+            allow_pickup_extension=allow_extension,
+        )
+        # Use the same rules to include intermediate stops in a new or active route.
         return self.propose_route_update(route, elevator, pending, now=now)
+
+    def propose_route_update(
+        self, route: Route, elevator: Elevator, pending: PendingRequests, *, now: float
+    ) -> Route:
+        """Propose stops without changing the active route or consuming requests.
+
+        If the next target changes while moving, the controller must obtain
+        hardware approval. Rejection leaves the original route in use.
+        """
+        self._validate_inputs(elevator, pending, now)
+        if elevator.faulted or route.travel_direction is None:
+            return route
+
+        route = self._extend_pickup_approach(route, elevator, pending, now)
+        direction = route.travel_direction
+        stops_by_floor = {stop.floor: stop for stop in route.stops}
+
+        for request in pending.cabin:
+            if self._fits_route(request.floor, route, elevator):
+                stops_by_floor.setdefault(request.floor, PlannedStop(request.floor, direction))
+
+        for request in pending.hall:
+            if request.direction is direction and self._fits_route(request.floor, route, elevator):
+                # setdefault keeps an existing stop's service direction, including
+                # a terminal pickup that serves the opposite direction to travel.
+                stops_by_floor.setdefault(request.floor, PlannedStop(request.floor, direction))
+
+        # Visit low-to-high floors going UP, and high-to-low going DOWN.
+        ordered_floors = sorted(stops_by_floor, reverse=direction is Direction.DOWN)
+        ordered_stops = tuple(stops_by_floor[floor] for floor in ordered_floors)
+        return replace(route, stops=ordered_stops)
+
+    def _choose_cabin_stop(self, elevator: Elevator, pending: PendingRequests) -> PlannedStop:
+        """The nearest cabin destination sets the direction; the farthest sets its end."""
+        current = elevator.current_floor
+
+        def cabin_priority(request: CabinRequest) -> tuple[int, int, int]:
+            distance = abs(request.floor - current)
+            keeps_direction = self._direction(current, request.floor) == elevator.last_direction
+            # Compare distance first, then prefer the previous direction, then
+            # the lower floor. min() compares these tuple fields left to right.
+            direction_priority = 0 if keeps_direction else 1
+            return distance, direction_priority, request.floor
+
+        closest = min(pending.cabin, key=cabin_priority)
+        direction = self._direction(current, closest.floor)
+        if direction is None:
+            # Already at the cabin destination: share service with the oldest
+            # local hall call, if one exists, without starting a movement.
+            local_calls = tuple(request for request in pending.hall if request.floor == current)
+            service_direction = self._oldest(local_calls).direction if local_calls else None
+            return PlannedStop(current, service_direction)
+
+        forward_floors = [
+            request.floor for request in pending.cabin
+            if self._is_ahead(current, request.floor, direction)
+        ]
+        terminal = max(forward_floors) if direction is Direction.UP else min(forward_floors)
+        return PlannedStop(terminal, direction)
 
     def _extend_pickup_approach(
         self, route: Route, elevator: Elevator, pending: PendingRequests, now: float
     ) -> Route:
         """Move an opposite-direction pickup to the farthest matching hall call.
 
-        The displaced hall call stays pending, including its original age. Only
-        an unboarded approach is eligible; no existing intermediate stop is
-        discarded. Any overdue hall call blocks further extension.
+        Example: from 7, approach 3 UP, then receive 1 UP. Continue to 1 before
+        collecting 3 on the way back UP, if no service has started yet.
         """
         pickup = route.committed_pickup
         direction = route.travel_direction
-        if (
-            not route.allow_pickup_extension or pending.cabin
-            or elevator.doors is not DoorState.CLOSED
-            or pickup is None or direction is None or pickup.direction is direction
-            or any(now - request.created_at >= self.max_hall_wait for request in pending.hall)
-        ):
+        # Keep the endpoint once service starts, or when cabin requests need priority.
+        if not route.allow_pickup_extension or pending.cabin or elevator.doors is not DoorState.CLOSED:
+            return route
+        if pickup is None or direction is None or pickup.direction is direction:
+            return route
+        # Do not postpone any call further after it reaches the waiting threshold.
+        if self._overdue_calls(pending, now):
             return route
         farther_calls = tuple(
             request for request in pending.hall
             if request.direction is pickup.direction
-            and (request.floor - route.terminal_floor) * direction.step > 0
+            and self._is_ahead(route.terminal_floor, request.floor, direction)
         )
         if not farther_calls:
             return route
-        farther = max(farther_calls, key=lambda request: request.floor * direction.step)
+        if direction is Direction.UP:
+            farther = max(farther_calls, key=lambda request: request.floor)
+        else:
+            farther = min(farther_calls, key=lambda request: request.floor)
         # The old terminal pickup will be served in its requested direction on
         # the return trip. It is not fulfilled here and retains its wait time.
         stops = tuple(stop for stop in route.stops if stop.floor != route.terminal_floor)
@@ -134,40 +172,47 @@ class SchedulingPolicy:
             stops=stops + (PlannedStop(farther.floor, farther.direction),),
         )
 
-    def propose_route_update(
-        self, route: Route, elevator: Elevator, pending: PendingRequests, *, now: float
-    ) -> Route:
-        """Return an immutable proposal without changing the active route.
+    @staticmethod
+    def _direction(origin: int, destination: int) -> Direction | None:
+        if destination == origin:
+            return None
+        return Direction.UP if destination > origin else Direction.DOWN
 
-        When the next target changes during movement, the controller must get
-        hardware approval before adopting the proposal. On rejection, retain
-        the old route and all pending requests. An eligible pickup approach may
-        move its terminal pickup farther away; other committed stops stay put.
-        """
+    @staticmethod
+    def _is_ahead(origin: int, destination: int, direction: Direction) -> bool:
+        """Strictly ahead: the origin itself does not count."""
+        if direction is Direction.UP:
+            return destination > origin
+        return destination < origin
+
+    @staticmethod
+    def _fits_route(floor: int, route: Route, elevator: Elevator) -> bool:
+        # While moving, current_floor is the last reported floor; it is too late
+        # to add a stop there. When stopped, service at that floor is allowed.
+        current = elevator.current_floor
+        if elevator.motion is MotionState.MOVING and floor == current:
+            return False
+        if route.travel_direction is Direction.UP:
+            return current <= floor <= route.terminal_floor
+        return route.terminal_floor <= floor <= current
+
+    @staticmethod
+    def _oldest(requests: tuple[HallRequest, ...]) -> HallRequest:
+        # Equal timestamps: choose the lower floor, then direction alphabetically.
+        return min(requests, key=lambda request: (request.created_at, request.floor, request.direction.value))
+
+    def _overdue_calls(self, pending: PendingRequests, now: float) -> tuple[HallRequest, ...]:
+        return tuple(
+            request for request in pending.hall
+            if now - request.created_at >= self.max_hall_wait
+        )
+
+    @staticmethod
+    def _validate_inputs(elevator: Elevator, pending: PendingRequests, now: float) -> None:
         validate_time(now)
-        self._check_building(elevator, pending)
+        if elevator.current_floor > pending.number_of_floors:
+            raise ValueError("The elevator is outside the building.")
+        if elevator.target_floor is not None and elevator.target_floor > pending.number_of_floors:
+            raise ValueError("The target is outside the building.")
         if any(request.created_at > now for request in pending.hall):
             raise ValueError("Request timestamps and now must use the same clock.")
-        if elevator.faulted or route.travel_direction is None:
-            return route
-
-        route = self._extend_pickup_approach(route, elevator, pending, now)
-        direction = route.travel_direction
-        current = elevator.current_floor
-        candidates = {stop.floor: stop for stop in route.stops}
-
-        def fits(floor: int) -> bool:
-            distance = (floor - current) * direction.step
-            ahead = distance > 0 if elevator.motion is MotionState.MOVING else distance >= 0
-            return ahead and (route.terminal_floor - floor) * direction.step >= 0
-
-        for request in pending.cabin:
-            if fits(request.floor):
-                candidates.setdefault(request.floor, PlannedStop(request.floor, direction))
-        for request in pending.hall:
-            if request.direction is direction and fits(request.floor):
-                # Preserve the service direction of a committed terminal pickup.
-                candidates.setdefault(request.floor, PlannedStop(request.floor, direction))
-
-        ordered = tuple(candidates[floor] for floor in sorted(candidates, reverse=direction is Direction.DOWN))
-        return replace(route, stops=ordered)

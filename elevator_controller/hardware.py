@@ -22,7 +22,9 @@ class ElevatorHardware(Protocol):
     an adapter for a new session requires clearing events from the old session.
     """
 
-    def get_initial_state(self) -> Elevator: ...
+    def get_initial_state(self) -> Elevator:
+        """Return the elevator state at the start of a new controller session."""
+        ...
 
     def wait_for_event(self) -> HardwareEvent | None:
         """Block until an event, or return None when cancel_wait wakes the reader."""
@@ -32,7 +34,9 @@ class ElevatorHardware(Protocol):
         """Wake the reader, even if called immediately before it starts waiting."""
         ...
 
-    def move_to_floor(self, floor: int, command_id: int) -> bool: ...
+    def move_to_floor(self, floor: int, command_id: int) -> bool:
+        """Request a new target floor. Return True if accepted, False if rejected."""
+        ...
 
     def try_update_target(self, floor: int, command_id: int) -> bool:
         """Shorten or extend the active movement without reversing.
@@ -42,8 +46,14 @@ class ElevatorHardware(Protocol):
         """
         ...
 
-    def open_doors(self, command_id: int) -> bool: ...
+    def open_doors(self, command_id: int) -> bool:
+        """Request the doors to open. Return True if accepted, False if rejected."""
+        ...
 
-    def close_doors(self, command_id: int) -> bool: ...
+    def close_doors(self, command_id: int) -> bool:
+        """Request the doors to close. Return True if accepted, False if rejected."""
+        ...
 
-    def update_displays(self, floor: int, direction: Direction | None) -> None: ...
+    def update_displays(self, floor: int, direction: Direction | None) -> None:
+        """Update the floor and direction displays. Called after each state change."""
+        ...

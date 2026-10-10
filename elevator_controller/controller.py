@@ -126,6 +126,7 @@ class ElevatorController:
         self._dwell_deadline = None
 
     def _display(self) -> None:
+        """Update the hardware displays to match the current elevator state."""
         direction = None
         if self._elevator.motion is MotionState.MOVING:
             direction = self._elevator.last_direction
@@ -157,6 +158,7 @@ class ElevatorController:
             self._publish()
 
     def _handle_button(self, event: HallButtonPressed | CabinButtonPressed) -> None:
+        """Accept a new request, update the route, and advance if ready."""
         # Bad passenger input is rejected without disabling valid service.
         try:
             if isinstance(event, HallButtonPressed):
@@ -172,14 +174,17 @@ class ElevatorController:
             return
         if not added or self._elevator.faulted:
             return
+
+        # If the elevator is stopped with doors open at this floor, mark the request served.
         if self._elevator.doors is DoorState.OPEN and self._service_stop is not None:
             self._pending.mark_served(
                 self._elevator.current_floor, self._service_stop.service_direction
             )
-        self._refresh_route()
-        self._advance_if_ready()
+        self._refresh_route() # Replan the route if the new request is relevant to the current movement.
+        self._advance_if_ready() # If the elevator is ready to depart, plan the next movement or open doors.
 
     def _refresh_route(self) -> None:
+        """Replan the route based on the current elevator state and pending requests."""
         if self._route is None or self._elevator.faulted:
             return
         proposal = self._policy.propose_route_update(
@@ -195,6 +200,7 @@ class ElevatorController:
         self._route = proposal
 
     def _advance_if_ready(self) -> None:
+        """If the elevator is ready to depart, plan the next movement or open doors."""
         if not self._elevator.ready_to_depart or self._service_stop is not None:
             return
         if self._route is None:
@@ -224,6 +230,7 @@ class ElevatorController:
         self._display()
 
     def _floor_passed(self, event: FloorPassed) -> None:
+        """Update the current floor if the event is for the active movement."""
         if event.command_id != self._motion_id:
             return
         self._check_floor(event.floor)
@@ -239,6 +246,7 @@ class ElevatorController:
         self._display()
 
     def _arrived(self, event: ArrivedAtFloor) -> None:
+        """Stop the elevator if the event is for the active movement and target floor."""
         if event.command_id != self._motion_id:
             return
         self._check_floor(event.floor)
@@ -253,6 +261,7 @@ class ElevatorController:
         self._begin_open()
 
     def _begin_open(self) -> None:
+        """Open the doors and mark the current stop as being serviced."""
         assert self._route is not None
         self._service_stop = self._route.next_stop
         command_id = self._command_id()
@@ -265,6 +274,7 @@ class ElevatorController:
         self._display()
 
     def _doors_opened(self, event: DoorsOpened) -> None:
+        """Mark the current stop as served and start the dwell timer."""
         if event.command_id != self._door_id:
             return
         if self._elevator.doors is not DoorState.OPENING:
@@ -278,6 +288,7 @@ class ElevatorController:
         self._dwell_deadline = self._clock() + self._dwell_seconds
 
     def _begin_close(self) -> None:
+        """Close the doors and clear the dwell timer."""
         command_id = self._command_id()
         if not self._hardware.close_doors(command_id):
             self._fail("Hardware rejected the door-close command.")
@@ -288,6 +299,7 @@ class ElevatorController:
         self._operation_deadline = self._clock() + self._operation_timeout
 
     def _doors_closed(self, event: DoorsClosed) -> None:
+        """Clear the current stop and advance to the next movement if ready."""
         if event.command_id != self._door_id:
             return
         if self._elevator.doors is not DoorState.CLOSING:
@@ -317,6 +329,7 @@ class ElevatorController:
         deadlines = [d for d in (self._dwell_deadline, self._operation_deadline) if d is not None]
         return max(0.0, min(deadlines) - self._clock()) if deadlines else None
 
+    # main loop for the controller thread; also used in unit tests without threads
     def run(self, events: Queue[ControlMessage], stopping: Event) -> None:
         try:
             self._display()
