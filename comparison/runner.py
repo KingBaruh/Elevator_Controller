@@ -5,7 +5,7 @@ from math import isfinite
 from queue import Empty
 from statistics import mean
 
-from elevator_controller import Direction, DoorState, ElevatorController, SchedulingPolicy
+from elevator_controller import Direction, DoorState, ElevatorController, ElevatorPolicy
 from elevator_controller.events import CabinButtonPressed, DoorsOpened, HallButtonPressed
 from elevator_simulator.hardware import SimulatorHardware
 
@@ -71,7 +71,7 @@ class Result:
     passengers: list[dict]
 
 
-def run(scenario: Scenario, policy: SchedulingPolicy, policy_name: str, settings: Settings = Settings()) -> Result:
+def run(scenario: Scenario, policy: ElevatorPolicy, policy_name: str, settings: Settings = Settings()) -> Result:
     if not isfinite(scenario.duration) or scenario.duration <= 0:
         raise ValueError("Time step and duration must be positive.")
     steps = round(scenario.duration / settings.time_step)

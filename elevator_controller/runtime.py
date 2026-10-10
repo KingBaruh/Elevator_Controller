@@ -9,7 +9,7 @@ from .events import ControlMessage, Shutdown
 from .hardware import ElevatorHardware
 from .listener import HardwareListener
 from .models import validate_time
-from .scheduler import SchedulingPolicy
+from .policy import ElevatorPolicy
 
 
 class ElevatorSystem:
@@ -25,7 +25,7 @@ class ElevatorSystem:
         hardware: ElevatorHardware, # The hardware
         number_of_floors: int, # The number of floors in the building
         *,
-        policy: SchedulingPolicy | None = None, # The scheduling policy to use; defaults to the default policy
+        policy: ElevatorPolicy | None = None, # The scheduling policy to use; defaults to the default policy
         door_dwell_seconds: float = 3.0, # The time to keep doors open after arriving at a floor
         operation_timeout: float = 30.0, # The maximum time to wait for a hardware operation to complete
     ) -> None:

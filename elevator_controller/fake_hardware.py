@@ -8,6 +8,7 @@ from .events import (
     ArrivedAtFloor, DoorsClosed, DoorsOpened, FloorPassed, HardwareEvent, HardwareFault,
 )
 from .models import Direction, DoorState, Elevator, MotionState
+from .hardware import ElevatorHardware
 
 
 @dataclass(frozen=True)
@@ -18,7 +19,7 @@ class HardwareCommand:
     accepted: bool = True
 
 
-class FakeHardware:
+class FakeHardware(ElevatorHardware):
     """Tests emit completion events explicitly and inspect recorded commands.
 
     The condition protects command acceptance and physical state together, so

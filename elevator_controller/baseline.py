@@ -4,13 +4,13 @@ from dataclasses import replace
 
 from .models import DoorState, Elevator, MotionState, PlannedStop, Route
 from .requests import PendingRequests
-from .scheduler import SchedulingPolicy
+from .policy import ElevatorPolicy
 
 
-class BaselinePolicy(SchedulingPolicy):
+class BaselinePolicy(ElevatorPolicy):
     """Reconsider priority at each stop, with no hall-call aging or service sweep.
 
-    Reuses geometry, validation and cabin tie-breaking from SchedulingPolicy.
+    Reuses geometry, validation and cabin tie-breaking from ElevatorPolicy.
     The two public methods below define different scheduling decisions. Keeping
     only the next stop lets the unchanged controller replan after doors close.
     Hardware approval is still required to change a target while moving.

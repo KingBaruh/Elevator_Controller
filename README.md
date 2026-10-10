@@ -1,7 +1,7 @@
 # Elevator Controller
 
 מימוש של בקר המעלית עם מדיניות תזמון, אירועי חומרה ושני חוטי עבודה.
-החיבור לחומרה מוגדר כממשק; ההדגמה והבדיקות משתמשות בחומרה מדומה
+החיבור לחומרה מוגדר במחלקה אבסטרקטית; ההדגמה והבדיקות משתמשות בחומרה מדומה
 שמקבלת אירועים ידניים. אין חיבור למנוע או למעלית פיזית.
 
 להרחבה התאורטית הנדרשת בתרגיל, ראה [ארכיטקטורה לשתי מעליות](TWO_ELEVATORS.md).
@@ -36,9 +36,11 @@ py -m elevator_controller --policy-only
 | --- | --- |
 | `elevator_controller/models.py` | בקשות, מצבי מעלית, עצירה ומסלול |
 | `elevator_controller/requests.py` | איחוד בקשות כפולות והשלמת שירות |
+| `elevator_controller/policy.py` | מחלקת בסיס אבסטרקטית למדיניות ופונקציות עזר משותפות |
 | `elevator_controller/scheduler.py` | בחירת מסלול והצעת עצירות ביניים |
+| `elevator_controller/baseline.py` | מדיניות השוואה עם עדיפות לבקשות פנימיות בכל תכנון חדש |
 | `elevator_controller/events.py` | הודעות לחיצות, חיישנים, סיום פעולות ותקלות |
-| `elevator_controller/hardware.py` | הצהרת ממשק החומרה וחוזה הפעולות |
+| `elevator_controller/hardware.py` | מחלקת בסיס אבסטרקטית לחומרה וחוזה הפעולות |
 | `elevator_controller/listener.py` | קליטת אירועים והעברתם לתור |
 | `elevator_controller/controller.py` | טיפול באירועים, בקשות, מסלול ודלתות |
 | `elevator_controller/runtime.py` | הפעלה וכיבוי של שני חוטי העבודה |
@@ -50,6 +52,27 @@ py -m elevator_controller --policy-only
 `HallRequest` ו-`CabinRequest` הן מחלקות נתונים. `Elevator` הוא צילום מצב
 בלתי ניתן לשינוי; הבקר מחליף אותו בעקבות אירועי חומרה. `Route` גם
 הוא בלתי ניתן לשינוי, כך שהצעה לשינוי מסלול לא משנה את המסלול הפעיל.
+
+`ElevatorPolicy` היא מחלקת בסיס אבסטרקטית שמגדירה שתי פעולות:
+`plan_next_route` לבחירת מסלול חדש, ו-`propose_route_update` להצעת עדכון מסלול.
+שתי המדיניות יורשות ממנה ישירות ומממשות את שתי הפעולות; אין ירושה ביניהן.
+פונקציות עזר משותפות לבדיקת קלט, חישובי כיוון ובחירת יעד פנימי נמצאות בבסיס.
+ההחלטה מתי לתת עדיפות לקריאה, להמשיך כיוון או להאריך מסלול שייכת לכל מימוש.
+מנגנון קידום הקריאות הוותיקות וסף ההמתנה נמצאים רק ב-`SchedulingPolicy`.
+הבקר, מערכת החוטים וכלי ההשוואה מקבלים `ElevatorPolicy`; ברירת המחדל נשארת
+`SchedulingPolicy`.
+
+```mermaid
+classDiagram
+    class ElevatorPolicy {
+        <<abstract>>
+        plan_next_route()
+        propose_route_update()
+    }
+    ElevatorPolicy <|-- SchedulingPolicy
+    ElevatorPolicy <|-- BaselinePolicy
+    ElevatorController --> ElevatorPolicy : uses
+```
 
 ## מדיניות התזמון
 
@@ -150,7 +173,11 @@ flowchart LR
 ```
 
 החצים הרציפים מציגים העברת אירועים או שימוש ברכיב; החצים המקווקווים
-מציגים ניהול חיי החוטים. `ElevatorHardware` הוא ממשק שהמתאם מממש:
+מציגים ניהול חיי החוטים. `ElevatorHardware` היא מחלקת בסיס אבסטרקטית (`ABC`):
+`FakeHardware` ו-`SimulatorHardware` יורשות ממנה ומממשות את כל הפעולות המסומנות
+ב-`@abstractmethod`. אי אפשר ליצור מופע של מחלקת הבסיס או של מחלקה יורשת
+שלא מימשה את כל הפעולות. הבקר עובד מול חוזה הבסיס; פעולות כמו `emit` בבדיקות
+ו-`tick` בסימולטור הן תוספות של המימושים ואינן חלק מהחוזה שהבקר צריך.
 בהדגמת הטרמינל משתמשים ב-`FakeHardware`, ובסימולטור ב-`SimulatorHardware`.
 `ElevatorSystem` יוצר את התור ואת שני חוטי העבודה. המדיניות ואוסף הבקשות
 פועלים בתוך חוט הבקר, ואינם חוטים נוספים.

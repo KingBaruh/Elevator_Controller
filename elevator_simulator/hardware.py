@@ -13,6 +13,7 @@ from elevator_controller.events import (
     HallButtonPressed, HardwareEvent,
 )
 from elevator_controller.models import Direction, DoorState, Elevator, MotionState, validate_floor
+from elevator_controller.hardware import ElevatorHardware
 
 
 @dataclass(frozen=True)
@@ -36,7 +37,7 @@ class SimulationSnapshot:
     activity: tuple[Activity, ...]
 
 
-class SimulatorHardware:
+class SimulatorHardware(ElevatorHardware):
     """Implements ElevatorHardware using a continuously changing position.
 
     The GUI calls tick() on its event loop. Commands also advance to the current
@@ -131,41 +132,41 @@ class SimulatorHardware:
                 self._events.put(CabinButtonPressed(floor_number))
                 self._record(f"Cabin selected floor {floor_number}.")
 
-    def move_to_floor(self, floor_number: int, command_id: int) -> bool:
-        self._check_floor(floor_number)
+    def move_to_floor(self, floor: int, command_id: int) -> bool:
+        self._check_floor(floor)
         with self._lock:
             self._advance(self._clock())
             if self._closed or self._motion_id is not None or self._doors is not DoorState.CLOSED:
                 return False
-            if floor_number == self._current_floor:
+            if floor == self._current_floor:
                 return False
-            self._target = floor_number
-            self._direction = Direction.UP if floor_number > self._position else Direction.DOWN
+            self._target = floor
+            self._direction = Direction.UP if floor > self._position else Direction.DOWN
             self._motion_id = command_id
-            self._record(f"Moving {self._direction.value} to floor {floor_number}.")
+            self._record(f"Moving {self._direction.value} to floor {floor}.")
             return True
 
-    def try_update_target(self, floor_number: int, command_id: int) -> bool:
-        self._check_floor(floor_number)
+    def try_update_target(self, floor: int, command_id: int) -> bool:
+        self._check_floor(floor)
         with self._lock:
             self._advance(self._clock())
             if self._closed or self._motion_id != command_id or self._direction is None:
                 return False
             assert self._target is not None
-            distance = (floor_number - self._position) * self._direction.step
+            distance = (floor - self._position) * self._direction.step
             remaining = (self._target - self._position) * self._direction.step
             extending = distance > remaining
-            if floor_number != self._target and (
+            if floor != self._target and (
                 distance < self.minimum_stop_distance
                 or (extending and remaining < self.minimum_stop_distance)
             ):
-                self._record(f"Too late to change the stop: floor {floor_number} stays pending.")
+                self._record(f"Too late to change the stop: floor {floor} stays pending.")
                 return False
-            self._target = floor_number
+            self._target = floor
             if extending:
-                self._record(f"Pickup approach extended to floor {floor_number}.")
+                self._record(f"Pickup approach extended to floor {floor}.")
             else:
-                self._record(f"Intermediate stop accepted: floor {floor_number}.")
+                self._record(f"Intermediate stop accepted: floor {floor}.")
             return True
 
     def open_doors(self, command_id: int) -> bool:
@@ -188,10 +189,10 @@ class SimulatorHardware:
             self._record("Closing doors.")
             return True
 
-    def update_displays(self, floor_number: int, direction: Direction | None) -> None:
-        self._check_floor(floor_number)
+    def update_displays(self, floor: int, direction: Direction | None) -> None:
+        self._check_floor(floor)
         with self._lock:
-            self._display_floor = floor_number
+            self._display_floor = floor
             self._display_direction = direction
 
     def _advance(self, now: float) -> None:

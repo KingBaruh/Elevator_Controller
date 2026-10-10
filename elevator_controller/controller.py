@@ -17,6 +17,7 @@ from .models import (
 )
 from .requests import PendingRequests
 from .scheduler import SchedulingPolicy
+from .policy import ElevatorPolicy
 
 
 @dataclass(frozen=True)
@@ -52,7 +53,7 @@ class ElevatorController:
         hardware: ElevatorHardware,
         number_of_floors: int,
         *,
-        policy: SchedulingPolicy | None = None,
+        policy: ElevatorPolicy | None = None,
         door_dwell_seconds: float = 3.0,
         operation_timeout: float = 30.0,
         clock: Callable[[], float] = monotonic,

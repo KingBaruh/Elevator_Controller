@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import messagebox
 from time import monotonic
 
-from elevator_controller import BaselinePolicy, Direction, DoorState, ElevatorSystem, MotionState, SchedulingPolicy
+from elevator_controller import BaselinePolicy, Direction, DoorState, ElevatorPolicy, ElevatorSystem, MotionState, SchedulingPolicy
 
 from .hardware import SimulatorHardware
 
@@ -28,7 +28,7 @@ def ui_font(size: int, bold: bool = False) -> tuple:
 
 
 class SimulatorApp:
-    def __init__(self, root: tk.Tk, *, policy: SchedulingPolicy | None = None) -> None:
+    def __init__(self, root: tk.Tk, *, policy: ElevatorPolicy | None = None) -> None:
         self.root = root
         self.policy = policy if policy is not None else SchedulingPolicy()
         policy_label = "Baseline: internal priority" if isinstance(self.policy, BaselinePolicy) else "Service sweep + aging"
