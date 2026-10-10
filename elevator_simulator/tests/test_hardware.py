@@ -272,6 +272,37 @@ class ControllerSimulationTests(unittest.TestCase):
             "Arrived at floor 3.", "Arrived at floor 6.",
         ])
 
+    def test_service_sweep_visits_seven_eight_ten_then_five(self):
+        self.hardware.press_cabin(7)
+        self.pump()
+        self.hardware.press_hall(8, Direction.UP)
+        self.pump()
+        self.pump(6)
+        self.pump(1)
+        self.hardware.press_cabin(5)
+        self.pump()
+        self.pump(2)
+        self.pump(1)
+        self.assertEqual(self.hardware.snapshot.target_floor, 8)
+        self.pump(1)
+        self.pump(1)
+        self.hardware.press_cabin(10)
+        self.pump()
+        self.pump(2)
+        self.pump(1)
+        self.assertEqual(self.hardware.snapshot.target_floor, 10)
+        self.pump(2)
+        self.complete_service()
+        self.assertEqual(self.hardware.snapshot.target_floor, 5)
+        self.pump(5)
+        self.complete_service()
+        self.assertTrue(self.controller.snapshot.idle)
+        arrivals = [record.text for record in self.hardware.snapshot.activity if record.text.startswith("Arrived")]
+        self.assertEqual(arrivals, [
+            "Arrived at floor 7.", "Arrived at floor 8.",
+            "Arrived at floor 10.", "Arrived at floor 5.",
+        ])
+
 
 if __name__ == "__main__":
     unittest.main()

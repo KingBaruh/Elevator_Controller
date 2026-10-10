@@ -104,14 +104,14 @@ class SchedulingTests(unittest.TestCase):
         self.assertIsNone(route.after_servicing(8))
         self.assertEqual(self.floors(self.plan(floor=8, now=20)), [1])
 
-    def test_new_request_cannot_extend_sweep_endpoint(self):
+    def test_forward_requests_extend_service_sweep(self):
         self.cabin(7)
         route = self.plan()
         self.cabin(9)
         self.hall(8)
         proposal = self.policy.propose_route_update(route, Elevator(2, motion=MotionState.MOVING), self.pending, now=10)
-        self.assertEqual(self.floors(proposal), [7])
-        self.assertEqual(proposal.terminal_floor, 7)
+        self.assertEqual(self.floors(proposal), [7, 8, 9])
+        self.assertEqual(proposal.terminal_floor, 9)
         self.assertEqual({r.floor for r in self.pending.cabin}, {7, 9})
 
     def test_new_internal_intermediate_stop_can_join(self):
@@ -218,12 +218,87 @@ class SchedulingTests(unittest.TestCase):
         proposal = self.policy.propose_route_update(route, Elevator(7), self.pending, now=11)
         self.assertEqual(self.floors(proposal), [3])
 
-    def test_same_direction_approach_keeps_its_original_endpoint(self):
+    def test_same_direction_approach_keeps_pickup_and_adds_forward_stop(self):
         self.hall(3, Direction.UP)
         route = self.plan(floor=1)
         self.hall(7, Direction.UP, created_at=11)
         proposal = self.policy.propose_route_update(route, Elevator(1), self.pending, now=11)
-        self.assertEqual(self.floors(proposal), [3])
+        self.assertEqual(self.floors(proposal), [3, 7])
+        self.assertEqual(proposal.terminal_floor, 7)
+
+    def test_service_direction_continues_before_a_reverse_cabin_request(self):
+        for current, next_floor, reverse_floor, direction in (
+            (7, 8, 5, Direction.UP), (4, 3, 6, Direction.DOWN),
+        ):
+            with self.subTest(direction=direction):
+                pending = PendingRequests(10)
+                pending.add_cabin(CabinRequest(reverse_floor))
+                pending.add_hall(HallRequest(next_floor, direction, 0))
+                route = self.policy.plan_next_route(
+                    Elevator(current, last_direction=direction), pending, now=10,
+                )
+                self.assertEqual(self.floors(route), [next_floor])
+                self.assertEqual(route.travel_direction, direction)
+
+    def test_opposite_calls_are_only_served_at_the_turnaround(self):
+        self.cabin(7)
+        self.hall(6, Direction.DOWN)
+        self.hall(8, Direction.DOWN)
+        route = self.plan()
+        self.assertEqual(self.floors(route), [7, 8])
+        self.assertEqual(route.stops[-1].service_direction, Direction.DOWN)
+
+    def test_extending_turnaround_defers_opposite_call_but_keeps_cabin_stop(self):
+        for cabin_at_old_turnaround in (False, True):
+            with self.subTest(cabin=cabin_at_old_turnaround):
+                pending = PendingRequests(10)
+                pending.add_cabin(CabinRequest(7))
+                pending.add_hall(HallRequest(8, Direction.DOWN, 0))
+                route = self.policy.plan_next_route(Elevator(1), pending, now=10)
+                if cabin_at_old_turnaround:
+                    pending.add_cabin(CabinRequest(8))
+                pending.add_hall(HallRequest(9, Direction.UP, 11))
+                proposal = self.policy.propose_route_update(
+                    route, Elevator(2, motion=MotionState.MOVING), pending, now=11,
+                )
+                expected = [7, 8, 9] if cabin_at_old_turnaround else [7, 9]
+                self.assertEqual(self.floors(proposal), expected)
+                self.assertTrue(all(stop.service_direction is Direction.UP for stop in proposal.stops))
+                self.assertIn(HallRequest(8, Direction.DOWN, 0), pending.hall)
+
+    def test_overdue_call_freezes_further_sweep_extension(self):
+        self.cabin(7)
+        route = self.plan(now=0)
+        self.hall(2, Direction.DOWN, created_at=0)
+        self.cabin(9)
+        proposal = self.policy.propose_route_update(
+            route, Elevator(3, motion=MotionState.MOVING), self.pending, now=60,
+        )
+        self.assertEqual(self.floors(proposal), [7])
+        self.assertEqual(proposal.terminal_floor, 7)
+
+    def test_opposite_direction_pickup_does_not_become_an_upward_service_sweep(self):
+        self.hall(6, Direction.DOWN)
+        route = self.plan()
+        self.hall(7, Direction.UP, created_at=11)
+        proposal = self.policy.propose_route_update(
+            route, Elevator(2, motion=MotionState.MOVING), self.pending, now=11,
+        )
+        self.assertEqual(self.floors(proposal), [6])
+        self.assertEqual(proposal.next_stop.service_direction, Direction.DOWN)
+
+    def test_turnaround_already_opening_is_not_extended(self):
+        self.cabin(7)
+        self.hall(8, Direction.DOWN)
+        route = self.plan()
+        self.pending.mark_served(7, Direction.UP)
+        route = route.after_servicing(7)
+        self.hall(9, Direction.UP, created_at=11)
+        proposal = self.policy.propose_route_update(
+            route, Elevator(8, doors=DoorState.OPENING), self.pending, now=11,
+        )
+        self.assertEqual(self.floors(proposal), [8])
+        self.assertEqual(proposal.next_stop.service_direction, Direction.DOWN)
 
     def test_doors_opening_open_or_closing_block_pickup_extension(self):
         self.hall(3, Direction.UP)
@@ -324,7 +399,7 @@ class SchedulingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.plan(floor=11)
 
-    def test_endpoint_and_commitments_survive_all_possible_new_requests(self):
+    def test_sweep_extends_to_building_limit_without_reversing_or_losing_cabin_stops(self):
         # Sweep both directions across all possible new button inputs.
         for origin, terminal in ((1, 7), (10, 3)):
             requests = PendingRequests(10)
@@ -340,12 +415,13 @@ class SchedulingTests(unittest.TestCase):
                     requests.add_hall(HallRequest(floor, Direction.DOWN, 0))
             proposal = self.policy.propose_route_update(route, moving, requests, now=0)
             with self.subTest(origin=origin):
-                self.assertEqual(proposal.terminal_floor, terminal)
+                expected_terminal = 10 if direction is Direction.UP else 1
+                self.assertEqual(proposal.terminal_floor, expected_terminal)
                 self.assertEqual(proposal.travel_direction, direction)
                 self.assertIn(route.next_stop, proposal.stops)
                 for stop in proposal.stops:
                     self.assertGreater((stop.floor - moving.current_floor) * direction.step, 0)
-                    self.assertGreaterEqual((terminal - stop.floor) * direction.step, 0)
+                    self.assertGreaterEqual((expected_terminal - stop.floor) * direction.step, 0)
 
 
 class RequestTests(unittest.TestCase):

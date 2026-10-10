@@ -33,25 +33,32 @@ class SchedulingPolicy:
     ) -> Route | None:
         """Call only when there is no active route or service commitment.
 
-        An overdue hall call leads; otherwise cabin requests lead; otherwise
-        the oldest hall call leads. Planning never consumes pending requests.
+        An overdue hall call leads. Otherwise finish the current service
+        direction before choosing a new direction. Planning consumes no requests.
         """
         self._validate_inputs(elevator, pending, now)
         if not elevator.ready_to_depart or not pending:
             return None
 
-        # Priority: overdue hall call, then cabin destinations, then regular hall call.
+        # Aging can override direction at a route boundary. A cabin request at
+        # this floor can be served immediately without starting another trip.
         overdue = self._overdue_calls(pending, now)
+        continuation = None
+        cabin_here = any(request.floor == elevator.current_floor for request in pending.cabin)
+        if not overdue and not cabin_here and elevator.last_direction is not None:
+            continuation = self._sweep_terminal(elevator.current_floor, elevator.last_direction, pending)
         pickup = None
         if overdue:
             pickup = self._oldest(overdue)
-        elif not pending.cabin:
+        elif continuation is None and not pending.cabin:
             pickup = self._oldest(pending.hall)
 
         if pickup is not None:
             # Travel direction and pickup direction may differ: go UP to collect
             # a passenger who wants to go DOWN, then serve DOWN at the pickup.
             terminal_stop = PlannedStop(pickup.floor, pickup.direction)
+        elif continuation is not None:
+            terminal_stop = continuation
         else:
             terminal_stop = self._choose_cabin_stop(elevator, pending)
 
@@ -89,6 +96,7 @@ class SchedulingPolicy:
             return route
 
         route = self._extend_pickup_approach(route, elevator, pending, now)
+        route = self._extend_service_sweep(route, elevator, pending, now)
         direction = route.travel_direction
         stops_by_floor = {stop.floor: stop for stop in route.stops}
 
@@ -135,6 +143,60 @@ class SchedulingPolicy:
         terminal = max(forward_floors) if direction is Direction.UP else min(forward_floors)
         return PlannedStop(terminal, direction)
 
+    def _sweep_terminal(
+        self, origin: int, direction: Direction, pending: PendingRequests
+    ) -> PlannedStop | None:
+        """Find the last requested floor ahead, not the end of the building.
+
+        Opposite-direction hall calls are collected only at the turnaround;
+        the normal update loop skips them at intermediate floors.
+        """
+        floors = [
+            request.floor for request in (*pending.cabin, *pending.hall)
+            if self._is_ahead(origin, request.floor, direction)
+        ]
+        if not floors:
+            return None
+        terminal = max(floors) if direction is Direction.UP else min(floors)
+        hall_at_terminal = [request for request in pending.hall if request.floor == terminal]
+        service_direction = direction
+        if hall_at_terminal and not any(request.direction is direction for request in hall_at_terminal):
+            service_direction = hall_at_terminal[0].direction
+        return PlannedStop(terminal, service_direction)
+
+    def _extend_service_sweep(
+        self, route: Route, elevator: Elevator, pending: PendingRequests, now: float
+    ) -> Route:
+        """Finish serving this direction before handling destinations behind us."""
+        direction = route.travel_direction
+        pickup = route.committed_pickup
+        if direction is None or self._overdue_calls(pending, now):
+            return route
+        # An explicit pickup approached from the opposite direction keeps its
+        # promise. Its separate, pre-service extension rule is handled above.
+        if pickup is not None and pickup.direction is not direction:
+            return route
+        previous_terminal = route.stops[-1]
+        turns_at_terminal = previous_terminal.service_direction is not direction
+        if (turns_at_terminal and elevator.current_floor == route.terminal_floor
+                and elevator.doors is not DoorState.CLOSED):
+            return route  # The turnaround pickup has already started.
+
+        new_terminal = self._sweep_terminal(route.terminal_floor, direction, pending)
+        if new_terminal is None:
+            return route
+        stops = list(route.stops)
+        if turns_at_terminal:
+            # Moving the turnaround must not collect a DOWN caller mid-ascent
+            # (or an UP caller mid-descent). Keep any matching service there.
+            stops.pop()
+            cabin_there = any(r.floor == route.terminal_floor for r in pending.cabin)
+            hall_there = any(r.floor == route.terminal_floor and r.direction is direction for r in pending.hall)
+            if cabin_there or hall_there:
+                stops.append(PlannedStop(route.terminal_floor, direction))
+        stops.append(new_terminal)
+        return replace(route, terminal_floor=new_terminal.floor, stops=tuple(stops))
+
     def _extend_pickup_approach(
         self, route: Route, elevator: Elevator, pending: PendingRequests, now: float
     ) -> Route:
@@ -174,6 +236,7 @@ class SchedulingPolicy:
 
     @staticmethod
     def _direction(origin: int, destination: int) -> Direction | None:
+        """Return the direction from origin to destination, or None if equal."""
         if destination == origin:
             return None
         return Direction.UP if destination > origin else Direction.DOWN
@@ -187,6 +250,7 @@ class SchedulingPolicy:
 
     @staticmethod
     def _fits_route(floor: int, route: Route, elevator: Elevator) -> bool:
+        """Return True if the floor is between the current and terminal floors."""
         # While moving, current_floor is the last reported floor; it is too late
         # to add a stop there. When stopped, service at that floor is allowed.
         current = elevator.current_floor
@@ -198,10 +262,12 @@ class SchedulingPolicy:
 
     @staticmethod
     def _oldest(requests: tuple[HallRequest, ...]) -> HallRequest:
+        """Return the oldest request, breaking ties by floor and direction."""
         # Equal timestamps: choose the lower floor, then direction alphabetically.
         return min(requests, key=lambda request: (request.created_at, request.floor, request.direction.value))
 
     def _overdue_calls(self, pending: PendingRequests, now: float) -> tuple[HallRequest, ...]:
+        """Return hall calls that have waited longer than the threshold."""
         return tuple(
             request for request in pending.hall
             if now - request.created_at >= self.max_hall_wait

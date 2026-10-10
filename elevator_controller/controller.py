@@ -210,6 +210,8 @@ class ElevatorController:
         else:
             self._refresh_route()
         if self._route is None:
+            # Once all work is finished, the next call starts a fresh sweep.
+            self._elevator = replace(self._elevator, last_direction=None)
             self._display()
             return
         target = self._route.next_stop.floor
@@ -280,7 +282,10 @@ class ElevatorController:
         if self._elevator.doors is not DoorState.OPENING:
             raise ValueError("Unexpected door-open completion.")
         assert self._service_stop is not None and self._route is not None
-        self._elevator = replace(self._elevator, doors=DoorState.OPEN)
+        # At a turnaround, service direction differs from the arrival direction.
+        # Preserve it across door closing so the policy continues the right sweep.
+        service_direction = self._service_stop.service_direction or self._elevator.last_direction
+        self._elevator = replace(self._elevator, doors=DoorState.OPEN, last_direction=service_direction)
         self._door_id = None
         self._operation_deadline = None
         self._pending.mark_served(self._elevator.current_floor, self._service_stop.service_direction)

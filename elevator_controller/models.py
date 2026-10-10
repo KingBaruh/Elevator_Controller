@@ -63,7 +63,8 @@ class Elevator:
     """Immutable state snapshot; the controller replaces it on events.
 
     While moving, current_floor is the last reported floor. last_direction is
-    retained while stopped so equidistant destinations have a stable tie-break.
+    the service direction while stopped, and is cleared when the controller
+    becomes idle. This lets scheduling continue a sweep across door cycles.
     """
 
     current_floor: int
