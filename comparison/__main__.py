@@ -6,11 +6,11 @@ from dataclasses import asdict
 import json
 from math import isfinite
 from pathlib import Path
-from statistics import mean
 
 from elevator_controller import BaselinePolicy, SchedulingPolicy
 
-from .plots import LABELS, SCENARIOS, TITLES, grouped_summaries, values
+from .plots import read_csv
+from .report import report
 from .runner import Settings, run
 from .scenarios import scenarios
 
@@ -21,28 +21,6 @@ def write_csv(path: Path, rows: list[dict], fields=None) -> None:
         writer.writeheader()
         for row in rows:
             writer.writerow({key: round(value, 6) if isinstance(value, float) else value for key, value in row.items()})
-
-
-def report(output: Path, rows: list[dict]) -> None:
-    groups = grouped_summaries(rows)
-    lines = ["# Policy comparison results", "", "Generated with `py -m comparison`. See [methodology](../README.md).", "",
-             "Mixed-traffic cells are equal-weight means of run-level metrics across seeds; scripted scenarios have one run.", "",
-             "| Scenario | Policy | Hall completed | Hall pending | Hall mean wait, served (s) | Oldest pending (s) | Cabin mean, served (s) | Distance (floors) |",
-             "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |"]
-    for scenario in SCENARIOS:
-        for policy in ("baseline", "service_sweep"):
-            cells = []
-            for metric in ("hall_completed", "hall_pending", "hall_mean_wait_s", "hall_oldest_pending_s", "cabin_mean_wait_s", "distance_floors"):
-                samples = values(groups[scenario, policy], metric)
-                cells.append(f"{mean(samples):.2f}" if samples else "N/A")
-            lines.append(f"| {TITLES[scenario]} | {LABELS[policy]} | " + " | ".join(cells) + " |")
-    lines += ["", "N/A means no completed requests, not zero waiting. Pending ages are censored at the run horizon.", "",
-              "Calls are deduplicated by floor/direction; cabin requests by destination. Equal passenger demand can produce different request counts.", "",
-              "The comparison changes both direction persistence and hall-call aging. It does not isolate their individual effects.", "",
-              "![Summary](figures/summary.png)", ""]
-    for scenario in SCENARIOS:
-        lines += [f"![{TITLES[scenario]}](figures/{scenario}.png)", ""]
-    (output / "REPORT.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def main() -> None:
@@ -79,7 +57,9 @@ def main() -> None:
                 summaries.append(result.summary)
                 print(f"{prefix}: hall served={result.summary['hall_completed']}, pending={result.summary['hall_pending']}")
         write_csv(data / "summary.csv", summaries)
-        report(output, summaries)
+    else:
+        summaries = read_csv(output / "data" / "summary.csv")
+    report(output, summaries)
     if not args.no_plots:
         from .plots import generate
         for path in generate(output):
