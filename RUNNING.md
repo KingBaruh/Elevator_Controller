@@ -72,6 +72,23 @@ py -m elevator_simulator --policy baseline
 אם החלון אינו נפתח, אפשר לבדוק את זמינות Tkinter באמצעות `py -m tkinter`;
 הפקודה אמורה לפתוח חלון בדיקה שאפשר לסגור. הרצת הממשק דורשת סביבת שולחן עבודה.
 
+## הרחבה — שתי מעליות עם ממשק גרפי
+
+```powershell
+py -m elevator_group
+```
+
+שני פירים, כפתורי קומות משותפים, לוח יעדים לכל מעלית ומוני זמן המתנה עם
+שיוך ל־A או ל־B. `Demo traffic` מדגים תנועה במקביל; `Reset simulation`
+מאפס את שתיהן. אפשר להפעיל עם `--policy baseline`.
+
+```powershell
+py -m unittest elevator_group.tests.test_group -v
+```
+
+הבדיקות החדשות נכללות גם ב־`py -m unittest discover -v`.
+להסבר הארכיטקטורה והשימוש ראה [מדריך שתי המעליות](elevator_group/README.md).
+
 ## השוואת מדיניות ויצירת גרפים
 
 ```powershell
